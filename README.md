@@ -12,7 +12,6 @@ Phase 01 · Lexical Analysis
 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)
-![Pandas](https://img.shields.io/badge/Pandas-150458?style=flat-square&logo=pandas&logoColor=white)
 ![Status](https://img.shields.io/badge/Phase_1-Completed-2E8B57?style=flat-square)
 ![Project](https://img.shields.io/badge/Academic-6C63FF?style=flat-square)
 
