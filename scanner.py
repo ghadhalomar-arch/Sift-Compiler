@@ -17,6 +17,12 @@ TOKEN_PATTERNS = [
     ("DELIMITER", re.compile(r'[(),.]')),
 ]
 
+def check_number(value):
+    return re.fullmatch(r'[0-9]{1,10}(?:\.[0-9]+)?',value) is not None
+
+def check_identifier(name):
+    return len(name) <= 16
+
 def scan(source):
     tokens = []
     symbols = {}
@@ -31,62 +37,53 @@ def scan(source):
             if char.isspace():
                 position += 1
                 continue
-
+            
             if char == "#":
                 break
-
+            #checking text
             if char == '"':
-                match = TOKEN_PATTERNS[0][1].match(line, position)
-                if not match:
-                    errors.append(
-                        f"Line {line_number}: Unclosed text literal"
-                    )
+                text_match = re.match(TOKEN_PATTERNS[0][1] , line[position:])
+                if text_match is None : 
+                    errors.append( f"Line {line_number}: Unclosed text literal" )
                     break
+            
+            #checking num
+            if char in "0123456789":
+                number_match = re.match( r'[0-9][A-Za-z0-9_.]*', line[position:])
+                word=number_match.group()
 
-            if char.isdigit():
-                candidate = re.match(
-                    r'[0-9][A-Za-z0-9_.]*',
-                    line[position:]
-                ).group()
+                if not check_number(word):
+                    errors.append( f"Line {line_number}: Malformed number {word}")
+                    position += len(word)
+                    continue
+            #checking idn
+            if char.isalpha() and char.isascii:
+                name_match = re.match(  r'[A-Za-z][A-Za-z0-9_]*', line[position:] )
+                word=name_match.group()
 
-                if not re.fullmatch(
-                    r'[0-9]{1,10}(?:\.[0-9]+)?',
-                    candidate
-                ):
-                    errors.append(
-                        f"Line {line_number}: Malformed number {candidate}"
-                    )
-                    position += len(candidate)
+                if not check_identifier(word):
+                    errors.append(  f"Line {line_number}: Identifier too long: {word}" )
+                    position += len(word)
                     continue
 
-            if char.isalpha():
-                candidate = re.match(
-                    r'[A-Za-z][A-Za-z0-9_]*',
-                    line[position:]
-                ).group()
+            #find token
+            token_type = None
+            lexeme = ""
 
-                if len(candidate) > 16:
-                    errors.append(
-                        f"Line {line_number}: Identifier too long: {candidate}"
-                    )
-                    position += len(candidate)
-                    continue
+            for current_type, pattern in TOKEN_PATTERNS:
+                match = re.match(pattern, line[position:])
 
-            matches = []
+                if match and len(match.group())>len(lexeme):
+                    token_type = current_type
+                    lexeme = match.group()
 
-            for token_type, pattern in TOKEN_PATTERNS:
-                match = pattern.match(line, position)
-                if match:
-                    matches.append(
-                        (len(match.group()), token_type, match.group())
-                    )
+            if token_type is None :
+                errors.append(f"Line {line_number}: Unknown symbol: {char}")
+                position += 1
+                continue
 
-            if matches:
-                _, token_type, lexeme = max(
-                    matches, key=lambda item: item[0]
-                )
-
-                if token_type == "IDENTIFIER":
+            # tables
+            if token_type == "IDENTIFIER":
                     lexeme = lexeme.lower()
 
                     if lexeme in KEYWORDS:
@@ -94,17 +91,12 @@ def scan(source):
                     elif lexeme not in symbols:
                         symbols[lexeme] = line_number
 
-                tokens.append({
+            tokens.append({
                     "Type": token_type,
                     "Line": line_number,
                     "Lexeme": lexeme
                 })
 
-                position += len(lexeme)
-            else:
-                errors.append(
-                    f"Line {line_number}: Unknown symbol '{char}'"
-                )
-                position += 1
-
+            position += len(lexeme)
+          
     return tokens, symbols, errors
