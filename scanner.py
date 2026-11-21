@@ -57,7 +57,7 @@ def scan(source):
                     position += len(word)
                     continue
             #checking idn
-            if char.isalpha() and char.isascii:
+            if char.isalpha() and char.isascii():
                 name_match = re.match(  r'[A-Za-z][A-Za-z0-9_]*', line[position:] )
                 word=name_match.group()
 
